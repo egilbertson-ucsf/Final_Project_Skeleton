@@ -12,16 +12,12 @@ class NeuralNetwork():
 
         if expected_out == 'auto':
             self.exp = input
+            self.l0 = input
+            self.input_dim = len(input[0])
         else:
-            self.exp = []
-            for seq in input:
-                self.exp.append(seq[0:2])
-
-        self.l0 = []
-        for seq in input:
-            self.l0.append(seq[2:])
-
-        self.input_dim = len(input[0]) - 2
+            self.exp = input[:,:1]
+            self.l0 = input[:, 1:]
+            self.input_dim = len(input[0]) - 1
         self.num_hidden = num_hidden
         self.output_dim = output_dim
         self.b = bias
@@ -112,15 +108,7 @@ class NeuralNetwork():
         l1 = activation(np.dot(self.l0, self.w1))
         l2 = activation(np.dot(l1, self.w2))
 
-        predictions = []
-        # return output as a single number
-        for output in self.l2[:,]:
-            max_arg = np.argmax(output)
-            if max_arg == 0:
-                predictions.append(1 - output[max_arg])
-            else:
-                predictions.append(output[max_arg])
-        return predictions
+        return l2
 
 def activation(x, dx = False):
     '''

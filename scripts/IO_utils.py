@@ -6,7 +6,7 @@ import numpy as np
 import random
 
 
-path = os.path.join(os.path.sep, 'Users', 'egilbertson', 'Box', 'UCSF','Winter2020','Algorithms','Final_Project_Skeleton','data')
+path = os.path.join(os.path.sep, 'Users', 'egilbertson', 'Box Sync', 'UCSF','Winter2020','Algorithms','Final_Project_Skeleton','data')
 
 
 def to_binary(seqs):
@@ -93,7 +93,7 @@ def master_training_set(pos, neg):
     master = set()
 
     for posseq in pos:
-        tmp = '01' + posseq # add '01' at beginning to identify positive sequences
+        tmp = '1' + posseq # add '01' at beginning to identify positive sequences
         master.add(tmp)
 
     number_of_neg_examples = len(pos) * 100 # take 100x more negative samples than positive
@@ -101,7 +101,7 @@ def master_training_set(pos, neg):
     random.shuffle(neg) # randomly shuffle the negative set so choice can be a one liner
 
     for negseq in neg[0:number_of_neg_examples]: # choose first n negative samples after reshuffling
-        tmp = '10' + negseq # '10' to ID negative sequences
+        tmp = '0' + negseq # '10' to ID negative sequences
         master.add(tmp)
 
     return master
