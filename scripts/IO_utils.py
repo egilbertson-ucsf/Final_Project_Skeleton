@@ -4,9 +4,11 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 import numpy as np
 import random
+from sklearn import metrics
+import matplotlib.pyplot as plt
+import scripts.NN as NN
 
-
-path = os.path.join(os.path.sep, 'Users', 'egilbertson', 'Box Sync', 'UCSF','Winter2020','Algorithms','Final_Project_Skeleton','data')
+path = os.path.join(os.path.sep, 'Users', 'egilbertson', 'Box', 'UCSF','Winter2020','Algorithms','Final_Project_Skeleton','data')
 
 
 def to_binary(seqs):
@@ -84,27 +86,46 @@ def reverse_complement(seqs):
     return reverse_set
 
 
-def master_training_set(pos, neg):
+def downsample_and_label(pos, neg, prop):
     """
     Input: positive and negatice sequences in binary form
     Output: set of positive and negative sequences to be used in training the neural net
     """
     np.random.seed(100)  # set random seed so results can be reproduced
-    master = set()
-
+    new_pos = []
+    new_neg = []
     for posseq in pos:
-        tmp = '1' + posseq # add '01' at beginning to identify positive sequences
-        master.add(tmp)
+        new_pos.append('1' + posseq) # add '01' at beginning to identify positive sequences
 
-    number_of_neg_examples = len(pos) * 100 # take 100x more negative samples than positive
+    number_of_neg_examples = len(pos) * prop # take 100x more negative samples than positive
 
     random.shuffle(neg) # randomly shuffle the negative set so choice can be a one liner
 
     for negseq in neg[0:number_of_neg_examples]: # choose first n negative samples after reshuffling
-        tmp = '0' + negseq # '10' to ID negative sequences
-        master.add(tmp)
+        new_neg.append('0' + negseq) # '10' to ID negative sequences
+    return new_pos, new_neg
 
-    return master
+def split_training_testing(neg, pos, train_ratio = 0.8):
+    '''
+    Input: negative and positive sets, and a ratio of the total that will go into the training set
+    Output: a training set and a testing set
+
+    all as numpy arrays
+    '''
+    np.random.seed(50)
+    random.shuffle(neg)
+    random.shuffle(pos)
+
+    pos_split_test = int(round(len(pos)*train_ratio, 0))
+    neg_split_test = int(round(len(neg)*train_ratio, 0))
+
+    pos_split_train = int(round(len(pos)*(1-train_ratio),0)) + int(round(len(pos)*train_ratio, 0))
+    neg_split_train = int(round(len(neg)*(1-train_ratio),0)) + int(round(len(neg)*train_ratio, 0))
+    train = pos[:pos_split_train].copy() + neg[:neg_split_train].copy()
+
+    test = pos[pos_split_test+1:pos_split_train].copy() + neg[neg_split_test+1:neg_split_train].copy()
+
+    return train, test
 
 def write_output(pos, neg, master):
     """
@@ -165,3 +186,49 @@ def read_negatives(pos_seqs):
 
 
     return list(real_negs)
+
+
+def read_test():
+    '''
+    Input: nothing
+    Output: list of sequences in the test seqs file
+    '''
+    fn = 'rap1-lieb-test.txt'
+    file = open(os.path.join(path, fn))
+    seqs = []
+    for line in file:
+        seqs.append(line.strip())
+
+    return seqs
+
+def cross_validation(pos, neg, k, reg_term, rounds, learn_rate, num_hidden):
+    master = np.append(pos, neg)
+    random.shuffle(master)
+    plt.figure(figsize=[5,5])
+    size = len(master)//k
+    AUCs = []
+    MSEs = []
+    for i in range(1,k+1):
+        idx1 = (i-1) * size
+        idx2 = i * size
+        test = master[idx1:idx2]
+        train = np.append(master[:idx1], master[idx2:])
+        test = string_to_array(test)
+        train = string_to_array(train)
+
+        nn = NN.NeuralNetwork(input = train, test_set = test, output_dim = 1, reg_term = reg_term, rounds=rounds, learn_rate = learn_rate, num_hidden = num_hidden)
+        err = nn.fit()
+        p, mse_test = nn.predict()
+        test_e = nn.test_exp
+
+        fpr, tpr, thresh = metrics.roc_curve(test_e, p, pos_label=1)
+        AUC = metrics.auc(fpr, tpr)
+        plt.plot(fpr, tpr, label = str(i) + ': AUC = ' + str(AUC))
+        plt.legend()
+        AUCs.append(AUC)
+        MSEs.append(mse_test)
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title("ROC ~ k-fold Cross Validation")
+
+    return AUCs, MSEs

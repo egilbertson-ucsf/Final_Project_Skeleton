@@ -4,7 +4,7 @@ class NeuralNetwork():
     '''
     Neural Net class to be used throughout project
     '''
-    def __init__(self, input, num_hidden = 3, output_dim = 8, learn_rate = 0.01, reg_term = 0.00001, rounds = 100000, bias=1, expected_out = None):
+    def __init__(self, input, test_set = None, num_hidden = 3, output_dim = 8, learn_rate = 0.01, reg_term = 0.00001, rounds = 100000, bias=1, expected_out = None):
         '''
         Initialize NeuralNetwork object
         Input: training input, number of nodes in hidden layer, output dimensions, learning rate, regularization term, rounds of gradient descent, bias, expected output
@@ -14,10 +14,19 @@ class NeuralNetwork():
             self.exp = input
             self.l0 = input
             self.input_dim = len(input[0])
+        elif expected_out == 'blind':
+            self.exp = input[:,:1]
+            self.l0 = input[:, 1:]
+            self.input_dim = len(input[0]) - 1
+            self.test_set = test_set
+            self.test_exp = None
         else:
             self.exp = input[:,:1]
             self.l0 = input[:, 1:]
             self.input_dim = len(input[0]) - 1
+            self.test_exp = test_set[:,:1]
+            self.test_set = test_set[:, 1:]
+
         self.num_hidden = num_hidden
         self.output_dim = output_dim
         self.b = bias
@@ -105,10 +114,15 @@ class NeuralNetwork():
         Output: predictions
         '''
 
-        l1 = activation(np.dot(self.l0, self.w1))
+        l1 = activation(np.dot(self.test_set, self.w1))
         l2 = activation(np.dot(l1, self.w2))
 
-        return l2
+        if self.test_exp is not None:
+            err = self.test_exp - l2
+            mse = np.average(np.square(err))
+        else:
+            mse = None
+        return l2, mse
 
 def activation(x, dx = False):
     '''
