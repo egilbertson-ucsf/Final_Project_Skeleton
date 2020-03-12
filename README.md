@@ -1,7 +1,14 @@
 [![Build
-Status](https://travis-ci.org/miriam-goldman/Final_Project_Skeleton.svg?branch=master)](https://travis-ci.org/miriam-goldman/Final_Project_Skeleton)
+Status](https://travis-ci.org/egilbertson-ucsf/Final_Project_Skeleton.svg?branch=master)](https://travis-ci.org/egilbertson-ucsf/Final_Project_Skeleton)
 
-Example python project with testing.
+BMI203 Final Project
+Design and Implement a Neural Network
+
+Writeup is in WriteUp.ipynb
+
+All code is in the scripts directory
+
+other jupyter notebooks were my personal testing and can be ignored
 
 ## usage
 
