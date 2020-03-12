@@ -1,5 +1,3 @@
-os
-sys
 Bio
 numpy
 random
